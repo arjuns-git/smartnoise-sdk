@@ -1,3 +1,8 @@
+# SmartNoise SQL v0.9.10 Release Notes
+
+* Removed dependency on `pandasql`
+* Support SQLAlchemy >= 2.0
+
 # SmartNoise SQL v0.2.9 Release Notes
 
 * MySql and SQLite readers

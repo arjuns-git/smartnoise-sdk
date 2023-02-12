@@ -6,7 +6,6 @@ import pytest
 import numpy as np
 
 import pandas as pd
-from pandasql import sqldf
 import math
 
 from snsql.metadata import Metadata

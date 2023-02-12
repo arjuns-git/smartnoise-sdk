@@ -4,7 +4,6 @@ import copy
 import pytest
 
 import pandas as pd
-from pandasql import sqldf
 import math
 
 from snsql import *
