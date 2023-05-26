@@ -1,0 +1,59 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+trigger:
+- main
+
+pool:
+  vmImage: 'windows-2019'
+
+steps:
+  - task: EsrpMalwareScanning@1
+    displayName: 'Run ESRP Malware Scan'
+    condition: and(succeeded(), eq(variables['codeSignEnabled'], 'true'))
+    inputs:
+      ConnectedServiceName: 'ESRP Malware Scanning service connection (PROD)'
+      FolderPath: '$(ESRPScanFolder)'
+      Pattern: '*.*'
+      Region: 'PuertoRico'
+      SessionTimeout: '60'
+      MaxConcurrency: '50'
+      MaxRetryAttempts: '5'
+
+  - task: securedevelopmentteam.vss-secure-development-tools.build-task-policheck.PoliCheck@1
+    displayName: 'Run PoliCheck'
+    inputs:
+      targetType: F
+      targetArgument: '$(Build.SourcesDirectory)\objects'
+    continueOnError: true
+
+  - task: securedevelopmentteam.vss-secure-development-tools.build-task-antimalware.AntiMalware@3
+    displayName: 'Run AntiMalware Scan'
+    inputs:
+      FileDirPath: '$(Build.SourcesDirectory)'
+      EnableServices: true
+      TreatSignatureUpdateFailureAs: 'Error'
+      TreatStaleSignatureAs: 'Error'
+    continueOnError: true
+
+  - task: CredScan@3
+    inputs:
+      toolMajorVersion: 'V2'
+
+  - task: securedevelopmentteam.vss-secure-development-tools.build-task-codesignvalidation.CodeSign@1
+    inputs:
+      Path: '$(Build.SourcesDirectory)\Communityhub\ConsoleExtension'
+      verboseOutput: true
+      PolicyType: 'Custom'
+      PolicyFile: '$(codeSignPolicyFile)'
+      ExcludePassesFromLog: false
+      FailIfNoTargetsFound: 'false'
+
+  - task: PublishSecurityAnalysisLogs@3
+    inputs:
+      ArtifactName: 'CodeAnalysisLogs'
+      ArtifactType: 'Container'
+      AllTools: true
+      ToolLogsNotFoundAction: 'Standard'
